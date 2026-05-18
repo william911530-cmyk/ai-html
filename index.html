@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 雙核心量化特質雷達</title>
+    <style>
+        :root {
+            --bg-color: #f4f7f6;
+            --card-bg: rgba(255, 255, 255, 0.85);
+            --primary: #2A9D8F;
+            --gemini-blue: #4285F4;
+            --deepseek-purple: #6222C5;
+            --text-dark: #264653;
+            --text-light: #6c757d;
+            --border-radius: 16px;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #e0eafc 0%, #cfdef3 100%);
+            color: var(--text-dark);
+            margin: 0; padding: 20px; min-height: 100vh;
+            display: flex; flex-direction: column; align-items: center;
+        }
+
+        header { text-align: center; margin-bottom: 35px; }
+        header h1 { margin: 0; font-size: 2.5rem; letter-spacing: 2px; }
+        header p { color: var(--text-light); margin-top: 5px; }
+
+        .hot-stocks-container { width: 100%; max-width: 1000px; margin-bottom: 30px; }
+        .hot-stocks-title { font-size: 1.2rem; margin-bottom: 15px; font-weight: bold; border-left: 4px solid var(--primary); padding-left: 10px; }
+        
+        /* 🌟 極致舒適的大拉桿範圍滾動條 */
+        .hot-stocks-grid {
+            display: flex; gap: 15px; overflow-x: auto;
+            padding: 15px 10px 25px 5px; margin-bottom: -10px; scrollbar-width: thin;
+        }
+        .stock-pill {
+            background: var(--card-bg); padding: 12px 24px; border-radius: 30px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05); backdrop-filter: blur(10px);
+            cursor: pointer; transition: all 0.3s ease; white-space: nowrap;
+            display: flex; align-items: center; gap: 12px; border: 1px solid rgba(255,255,255,0.5);
+        }
+        .stock-pill:hover {
+            transform: translateY(-3px); background: white;
+            box-shadow: 0 6px 12px rgba(42, 157, 143, 0.15); border-color: var(--primary);
+        }
+        .pill-ticker { font-weight: bold; }
+        .pill-price { color: var(--primary); font-weight: bold; font-size: 0.95rem; font-family: monospace; }
+
+        .control-panel {
+            width: 100%; max-width: 600px; display: flex; flex-direction: column;
+            align-items: center; gap: 15px; margin-bottom: 40px;
+        }
+        .search-section { width: 100%; display: flex; gap: 10px; }
+        input[type="text"] {
+            flex: 1; padding: 16px 24px; border: none; border-radius: 30px;
+            font-size: 1.1rem; box-shadow: 0 4px 15px rgba(0,0,0,0.05); outline: none;
+        }
+        button {
+            padding: 16px 36px; border: none; border-radius: 30px; background: var(--primary);
+            color: white; font-size: 1.1rem; font-weight: bold; cursor: pointer;
+            box-shadow: 0 4px 15px rgba(42, 157, 143, 0.3); transition: all 0.2s;
+        }
+        button:hover { background: #21867a; }
+
+        /* 🌟 典雅低調的雙 AI 智腦選擇器 */
+        .ai-selector { display: flex; gap: 10px; width: 100%; max-width: 320px; }
+        .ai-btn {
+            flex: 1; padding: 8px 16px; border: 1px solid rgba(0,0,0,0.1); border-radius: 20px;
+            background: rgba(255,255,255,0.5); font-size: 0.85rem; font-weight: bold; cursor: pointer;
+            color: var(--text-light); transition: all 0.3s; text-align: center;
+        }
+        .ai-btn.active[data-core="gemini"] { background: rgba(66, 133, 244, 0.15); color: var(--gemini-blue); border-color: var(--gemini-blue); }
+        .ai-btn.active[data-core="deepseek"] { background: rgba(98, 34, 197, 0.15); color: var(--deepseek-purple); border-color: var(--deepseek-purple); }
+
+        #loading-pigeon {
+            display: none; flex-direction: column; align-items: center; margin-bottom: 30px;
+            animation: bounce 1.5s infinite ease-in-out;
+        }
+        .pigeon-icon { font-size: 3rem; }
+        .pigeon-text { color: var(--primary); font-weight: bold; margin-top: 10px; letter-spacing: 1px;}
+        @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
+
+        #report-dashboard {
+            display: none; width: 100%; max-width: 1000px; background: var(--card-bg);
+            border-radius: var(--border-radius); padding: 30px; box-sizing: border-box;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08); backdrop-filter: blur(15px); border: 1px solid rgba(255,255,255,0.6);
+        }
+        .report-header { border-bottom: 2px solid #eee; padding-bottom: 15px; margin-bottom: 20px; }
+        .report-header h2 { margin: 0; color: var(--primary); font-size: 1.8rem; }
+        
+        .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+        .data-card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.03); }
+        .data-card h3 { margin-top: 0; font-size: 1.1rem; border-bottom: 1px dashed #ddd; padding-bottom: 10px; color: var(--text-dark); }
+        .data-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.95rem; }
+        .data-label { color: var(--text-light); }
+        .data-value { font-weight: bold; }
+
+        .ai-synthesis-card { grid-column: 1 / -1; background: linear-gradient(180deg, rgba(42, 157, 143, 0.05) 0%, white 100%); border-top: 4px solid var(--primary); }
+        .ai-text-content { line-height: 1.7; font-size: 1rem; white-space: pre-line; color: #2c3e50; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>AI 雙核心量化特質雷達</h1>
+        <p>優雅、精準，一鍵呼叫華爾街 AI 智腦分析</p>
+    </header>
+
+    <div class="hot-stocks-container">
+        <div class="hot-stocks-title">🔥 焦點台美股 (即時收盤價連動)</div>
+        <div class="hot-stocks-grid" id="hot-stocks-list"></div>
+    </div>
+
+    <div class="control-panel">
+        <div class="search-section">
+            <input type="text" id="ticker-input" placeholder="輸入股票代號 (如: 2330.TW, AAPL, NVDA)..." autocomplete="off">
+            <button onclick="triggerSearch()">深度掃描</button>
+        </div>
+        <div class="ai-selector">
+            <button class="ai-btn active" data-core="gemini" onclick="setAICore('gemini')">GEMINI 1.5</button>
+            <button class="ai-btn" data-core="deepseek" onclick="setAICore('deepseek')">DEEPSEEK V3</button>
+        </div>
+    </div>
+
+    <div id="loading-pigeon">
+        <div class="pigeon-icon">🕊️</div>
+        <div class="pigeon-text" id="loading-msg">飛鴿傳書，大腦計算中...</div>
+    </div>
+
+    <div id="report-dashboard">
+        <div class="report-header"><h2 id="report-title">股票代號分析報告</h2></div>
+        <div class="dashboard-grid">
+            <div class="data-card">
+                <h3>基本資訊與價格</h3>
+                <div class="data-row"><span class="data-label">當前股價</span><span class="data-value" id="val-price">--</span></div>
+                <div class="data-row"><span class="data-label">52週漲幅</span><span class="data-value" id="val-52w">--</span></div>
+                <div class="data-row"><span class="data-label">股價動能 (Beta)</span><span class="data-value" id="val-beta">--</span></div>
+            </div>
+            <div class="data-card">
+                <h3>估值指標</h3>
+                <div class="data-row"><span class="data-label">追蹤 PE</span><span class="data-value" id="val-pe">--</span></div>
+                <div class="data-row"><span class="data-label">PEG</span><span class="data-value" id="val-peg">--</span></div>
+                <div class="data-row"><span class="data-label">股息殖利率</span><span class="data-value" id="val-div">--</span></div>
+            </div>
+            <div class="data-card">
+                <h3>成長與財務</h3>
+                <div class="data-row"><span class="data-label">營收成長率</span><span class="data-value" id="val-rev">--</span></div>
+                <div class="data-row"><span class="data-label">ROE</span><span class="data-value" id="val-roe">--</span></div>
+                <div class="data-row"><span class="data-label">D/E (債資比)</span><span class="data-value" id="val-de">--</span></div>
+            </div>
+            <div class="data-card">
+                <h3>技術指標 (即時運算)</h3>
+                <div class="data-row"><span class="data-label">均線狀態</span><span class="data-value" id="val-ma">--</span></div>
+                <div class="data-row"><span class="data-label">RSI (14)</span><span class="data-value" id="val-rsi">--</span></div>
+                <div class="data-row"><span class="data-label">MACD 柱狀體</span><span class="data-value" id="val-macd">--</span></div>
+                <div class="data-row"><span class="data-label">KD (K/D)</span><span class="data-value" id="val-k">--</span></div>
+            </div>
+            <div class="data-card ai-synthesis-card">
+                <h3 id="ai-synthesis-title">AI 智腦量化分析綜合評估</h3>
+                <div class="ai-text-content" id="val-ai-analysis">分析文本產生中...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 🌟 設定你的雲端後端 Render 網址 (等一下在第二步拿到後填入這裡)
+        const BACKEND_URL = "https://ai-angine-analysis-the-stock.onrender.com"; 
+
+        let selectedAICore = 'gemini';
+        const hotStocks = [
+            { ticker: "2330.TW", name: "台積電" }, { ticker: "2317.TW", name: "鴻海" },
+            { ticker: "2454.TW", name: "聯發科" }, { ticker: "NVDA", name: "輝達" },
+            { ticker: "AAPL", name: "蘋果" }, { ticker: "TSLA", name: "特斯拉" }
+        ];
+
+        function setAICore(core) {
+            selectedAICore = core;
+            document.querySelectorAll('.ai-btn').forEach(b => b.classList.remove('active'));
+            document.querySelector(`.ai-btn[data-core="${core}"]`).classList.add('active');
+        }
+
+        // 焦點股自動去分片庫抓最新綠色價格
+        function initHotStocks() {
+            const list = document.getElementById('hot-stocks-list');
+            hotStocks.forEach(s => {
+                const pill = document.createElement('div');
+                pill.className = 'stock-pill';
+                pill.innerHTML = `<span class="pill-ticker">${s.name}</span><span class="pill-price" id="p-${s.ticker.replace('.','_')}">...</span>`;
+                pill.onclick = () => { document.getElementById('ticker-input').value = s.ticker; triggerSearch(); };
+                list.appendChild(pill);
+
+                let shard = s.ticker.includes(".TW") ? s.ticker.substring(0, 2) : "US";
+                // 讀取你之前部署完成的那個 GitHub Pages 分片資料庫路徑
+                fetch(`https://william911530-cmyk.github.io/Gemini-cli-built-the-github-repo/database/data_${shard}.json`)
+                    .then(r => r.json()).then(db => {
+                        if(db[s.ticker]) document.getElementById(`p-${s.ticker.replace('.','_')}`).innerText = `$${db[s.ticker].price}`;
+                    }).catch(()=>{});
+            });
+        }
+        initHotStocks();
+
+        document.getElementById('ticker-input').addEventListener('keypress', (e) => { if(e.key==='Enter') triggerSearch(); });
+
+        async function triggerSearch() {
+            let symbol = document.getElementById('ticker-input').value.trim().toUpperCase();
+            if(/^\d{4}$/.test(symbol)) { symbol += ".TW"; document.getElementById('ticker-input').value = symbol; }
+            if(!symbol) return;
+
+            document.getElementById('report-dashboard').style.display = 'none';
+            document.getElementById('loading-pigeon').style.display = 'flex';
+            document.getElementById('loading-msg').innerText = `飛鴿傳書，${selectedAICore.toUpperCase()} 智腦特徵工程建構中...`;
+
+            try {
+                // 🚀 正式向 Render 後端 API 發送即時分析請求
+                const res = await fetch(`${BACKEND_URL}/api/analyze`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ symbol: symbol, ai_choice: selectedAICore })
+                });
+                
+                if(!res.ok) throw new Error("後端機房連線失敗");
+                const data = await res.json();
+                const stock = data.stock_data;
+
+                document.getElementById('loading-pigeon').style.display = 'none';
+                document.getElementById('report-dashboard').style.display = 'block';
+
+                // 資料填入
+                document.getElementById('report-title').innerText = `📊 ${stock.symbol} 深度特徵量化報告`;
+                document.getElementById('val-price').innerText = `$${stock.price}`;
+                document.getElementById('val-52w').innerText = stock.change_52w;
+                document.getElementById('val-beta').innerText = stock.beta;
+                document.getElementById('val-pe').innerText = stock.pe;
+                document.getElementById('val-peg').innerText = stock.peg;
+                document.getElementById('val-div').innerText = stock.div;
+                document.getElementById('val-rev').innerText = stock.rev_growth;
+                document.getElementById('val-roe').innerText = stock.roe;
+                document.getElementById('val-de').innerText = stock.de;
+                
+                document.getElementById('val-ma').innerText = `計算完成`;
+                document.getElementById('val-rsi').innerText = stock.rsi;
+                document.getElementById('val-macd').innerText = stock.macd_hist;
+                document.getElementById('val-k').innerText = `K:${stock.k} / D:${stock.d}`;
+
+                // AI 文本輸出
+                document.getElementById('ai-synthesis-title').innerText = `💡 ${selectedAICore.toUpperCase()} 核心量化特質評估報告`;
+                document.getElementById('val-ai-analysis').innerText = data.ai_analysis;
+
+            } catch (err) {
+                alert("智腦回傳超時或錯誤！請確認後端伺服器是否開機成功。");
+                document.getElementById('loading-pigeon').style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>

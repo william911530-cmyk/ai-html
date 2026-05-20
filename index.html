@@ -300,9 +300,16 @@
         .code-bullet { color: #FFB6C1; } /* 項目符號：粉色 */
         .code-number { color: #D2B48C; font-weight: bold; } /* 數字與符號：棕色 */
 
+        /* === 暗黑科技感卷軸 === */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-main); }
+        ::-webkit-scrollbar-thumb { background: var(--border-line); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--accent-glow); box-shadow: 0 0 10px var(--accent-glow); }
 
-
-
+        /* === 修正 3D 螢幕圖層 (讓反光與掃描線浮在最上面) === */
+        .terminal-window::before { z-index: 100 !important; }
+        .terminal-window::after { z-index: 101 !important; }
+        
     </style>
 </head>
 <body>
@@ -597,14 +604,11 @@
             for (let i = 0; i < htmlString.length; i++) {
                 let char = htmlString.charAt(i);
                 currentHTML += char;
-                
                 if (char === '<') isTag = true;
                 if (char === '>') isTag = false;
                 
                 if (!isTag) {
                     element.innerHTML = currentHTML;
-                    // 自動滾動畫面
-                    element.closest('.terminal-window').scrollTop = element.closest('.terminal-window').scrollHeight;
                     await new Promise(r => setTimeout(r, speed));
                 }
             }
@@ -662,8 +666,8 @@
 
         // 在 showResults 的最尾端，換成呼叫 HTML 專用打字機
         // (把 showResults 函數最後的三行替換成這個)
-        // aiDisplay.innerHTML = ''; 
-        // typeWriterHTML(aiDisplay, coloredText, 10);
+        aiDisplay.innerHTML = ''; 
+        typeWriterHTML(aiDisplay, coloredText, 10);
     </script>
 </body>
 </html>

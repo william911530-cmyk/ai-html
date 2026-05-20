@@ -254,6 +254,18 @@
             z-index: 5; pointer-events: none;
             box-shadow: inset 0 0 100px rgba(0, 240, 255, 0.2); /* 增加邊緣青色幽光 */
 
+           /* 終端機立體弧度與質感外框 */
+        .terminal-window {
+            background: #0D1117;
+            border: 12px solid #2D333B; /* 厚實邊框 */
+            border-radius: 20px;
+            box-shadow: 
+                inset 0 0 20px rgba(0,0,0,0.8), /* 內部陰影模擬凹陷感 */
+                0 10px 30px rgba(0,0,0,0.5);   /* 外部陰影 */
+            position: relative;
+            overflow: hidden;
+         }
+
          /* 股票分析代碼風格化 */
          /* AI 股票分析報告風格 */
         .ai-content {

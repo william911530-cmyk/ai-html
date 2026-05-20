@@ -244,6 +244,17 @@
             pointer-events: none;
             z-index: 10;
         }
+          /* 終端機立體弧度與質感外框 */
+        .terminal-window {
+            background: #0D1117;
+            border: 12px solid #2D333B; /* 厚實邊框 */
+            border-radius: 20px;
+            box-shadow: 
+                inset 0 0 20px rgba(0,0,0,0.8), /* 內部陰影模擬凹陷感 */
+                0 10px 30px rgba(0,0,0,0.5);   /* 外部陰影 */
+            position: relative;
+            overflow: hidden;
+         }
 
          /* 股票分析代碼風格化 */
         ./* AI 股票分析報告風格 */
@@ -477,7 +488,20 @@
 
         // ================= CRT 螢幕與霓虹文字邏輯 =================
         // 📢 這裡就是你的「後台廣播內容」，你可以隨時更改這裡的文字！
-        const ANNOUNCEMENT_TEXT = "SYSTEM BOOT... WELCOME TO NEXUS.<br><br><span style='color: #FF3366;'>[ WARNING ]</span> HIGH VOLATILITY DETECTED.<br><br>> AWAITING COMMAND...";
+        const ANNOUNCEMENT_TEXT = `
+        <div style="padding-left: 30px; margin-top: 40px;">
+        <br><br><br><br>
+        SYSTEM BOOT... WELCOME TO NEXUS.<br><br>
+        <span style='color: #FF3366;'>[ WARNING ]</span> HIGH VOLATILITY DETECTED.<br><br>
+
+        <br><br><br><br>
+        陳重輔 : 南亞科抱到明年就600了<br><br>
+        我決定相信他<br><br>
+        <span style='color: #FF3366;'>[ WARNING ]</span>南亞科跌到275了!!!<br><br><br><br>
+    
+        > AWAITING COMMAND...
+        </div>
+`;
 
         let isCrtOn = false;
 

@@ -127,7 +127,7 @@
         @keyframes pulse { 0% { transform: scale(0.95); opacity: 0.8; } 50% { transform: scale(1.1); opacity: 1; box-shadow: 0 0 15px var(--accent-glow); } 100% { transform: scale(0.95); opacity: 0.8; } }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-         /* ================= CRT 電視與霓虹特效 ================= */
+        /* ================= CRT 電視與霓虹特效 ================= */
         .power-btn-wrapper {
             margin-top: 15px;
             padding-top: 15px;
@@ -206,7 +206,6 @@
             0%, 80%, 100% { color: rgba(255,255,255,0.1); text-shadow: none; opacity: 0.5; }
             10%, 30% { color: #fff; text-shadow: 0 0 10px var(--accent-glow), 0 0 20px var(--accent-glow), 0 0 40px var(--accent-glow); opacity: 1; }
         }
-
     </style>
 </head>
 <body>
@@ -234,6 +233,7 @@
                     <input type="text" id="target-input" class="search-input" placeholder="Symbol (e.g. 2330.TW)" autocomplete="off">
                     <button class="search-btn" onclick="initiateScan()">EXECUTE SCAN</button>
                 </div>
+                
                 <div class="power-btn-wrapper">
                     <button id="crt-power-btn" class="crt-power-btn" onclick="toggleCRT()">[ SYS_POWER : OFF ]</button>
                 </div>
@@ -297,10 +297,8 @@
         </section>
     </main>
 
-    
-
     <script>
-        // 🌟 請在這裡填入你的 Python 伺服器網址 (本地開發時用 127.0.0.1:5000)
+        // 🌟 請在這裡填入你的 Python 伺服器網址
         const BACKEND_URL = "https://ai-angine-analysis-the-stock.onrender.com";
 
         let currentCore = 'gemini';
@@ -321,6 +319,9 @@
         });
 
         async function initiateScan() {
+            // 如果 CRT 螢幕還開著，掃描時自動關閉它
+            if (isCrtOn) toggleCRT();
+
             let input = document.getElementById('target-input').value.trim().toUpperCase();
             if (/^\d{4}$/.test(input)) input += ".TW";
             if (!input) return;

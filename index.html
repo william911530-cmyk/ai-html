@@ -460,7 +460,7 @@
                 logContainer.innerHTML += `<div class="log-text" style="color: var(--accent-alert);">> [ERROR] CONNECTION FAILED. SERVER OFFLINE.</div>`;
             }
         }
-
+        
         function showResults(data) {
             document.getElementById('scanning-screen').style.display = 'none';
             document.getElementById('result-screen').style.display = 'block';
@@ -470,7 +470,16 @@
             document.getElementById('res-price').innerText = `$${stock.price}`;
             
             // 填入 8 大特徵欄位... (保持不變)
+            document.getElementById('res-symbol').innerText = stock.symbol;
+            document.getElementById('res-price').innerText = `$${stock.price}`;
             document.getElementById('res-pe').innerText = stock.pe;
+            document.getElementById('res-peg').innerText = stock.peg;
+            document.getElementById('res-52w').innerText = stock.change_52w;
+            document.getElementById('res-beta').innerText = stock.beta;
+            document.getElementById('res-roe').innerText = stock.roe;
+            document.getElementById('res-rsi').innerText = stock.rsi;
+            document.getElementById('res-kd').innerText = `K:${stock.k} D:${stock.d}`;
+            document.getElementById('res-macd').innerText = stock.macd_hist;
             // ... (其他欄位) ...
 
             // 自動上色邏輯 (現在這裡會變成高階 Code 風格)

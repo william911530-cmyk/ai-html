@@ -122,7 +122,18 @@
             border-radius: 8px; padding: 20px;
         }
         .ai-header { display: flex; align-items: center; gap: 10px; color: var(--accent-glow); font-family: var(--font-mono); font-size: 0.9rem; margin-bottom: 15px; }
-        .ai-content { line-height: 1.7; color: var(--text-main); font-size: 1rem; white-space: pre-line; }
+        .ai-content {
+            line-height: 1.8;
+            color: var(--accent-glow); /* 螢光青色 */
+            font-family: var(--font-mono); /* 強制終端機字體 */
+            font-size: 0.95rem;
+            white-space: pre-line;
+            text-shadow: 0 0 8px rgba(0, 240, 255, 0.4); /* 霓虹發光感 */
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.5); /* 幽暗底色 */
+            border-left: 3px solid var(--accent-glow);
+            letter-spacing: 0.5px;
+        }
 
         @keyframes pulse { 0% { transform: scale(0.95); opacity: 0.8; } 50% { transform: scale(1.1); opacity: 1; box-shadow: 0 0 15px var(--accent-glow); } 100% { transform: scale(0.95); opacity: 0.8; } }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -206,6 +217,21 @@
             0%, 80%, 100% { color: rgba(255,255,255,0.1); text-shadow: none; opacity: 0.5; }
             10%, 30% { color: #fff; text-shadow: 0 0 10px var(--accent-glow), 0 0 20px var(--accent-glow), 0 0 40px var(--accent-glow); opacity: 1; }
         }
+
+        /* ================= 古文明智腦對話框特效 ================= */
+        .chat-btn { margin-top: 10px; border-color: #33FF00; color: #33FF00; text-shadow: 0 0 5px #33FF00; }
+        .chat-btn:hover { background: rgba(51, 255, 0, 0.2); }
+        
+        #chat-interface {
+            display: none; height: 100%; flex-direction: column;
+            background: #020502; /* 極暗的綠黑底色 */
+            border: 1px solid #33FF00; border-radius: 8px; padding: 20px;
+            box-shadow: inset 0 0 30px rgba(51, 255, 0, 0.1);
+        }
+        
+        .chat-ai-msg { color: #33FF00; font-family: 'Courier New', monospace; text-shadow: 0 0 4px #33FF00; margin-bottom: 10px; line-height: 1.5; }
+        .chat-user-msg { color: #fff; font-family: 'Courier New', monospace; text-shadow: 0 0 4px #fff; margin-bottom: 10px; opacity: 0.8; margin-left: 20px; }
+        .cursor-blink { animation: blink 1s step-end infinite; display: inline-block; width: 8px; height: 15px; background: #33FF00; vertical-align: middle; }
     </style>
 </head>
 <body>
@@ -237,6 +263,12 @@
                 <div class="power-btn-wrapper">
                     <button id="crt-power-btn" class="crt-power-btn" onclick="toggleCRT()">[ SYS_POWER : OFF ]</button>
                 </div>
+
+                <div class="power-btn-wrapper" style="border-top: none; padding-top: 0;">
+                    <button class="crt-power-btn chat-btn" onclick="toggleChat()">[ INITIATE_COMMS ]</button>
+                </div>
+
+                
             </div>
 
             <div class="panel-box">
@@ -255,6 +287,19 @@
                 <div id="crt-screen">
                     <div class="neon-bulletin" id="neon-text-container">
                         </div>
+                </div>
+
+                <div id="chat-interface">
+                    <div style="color: #33FF00; border-bottom: 1px dashed #33FF00; padding-bottom: 10px; margin-bottom: 15px; font-family: 'Courier New', monospace;">
+                        [ NEXUS_INTELLIGENCE_LINK_ESTABLISHED ]
+                    </div>
+                    <div id="chat-history" style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 10px;">
+                        <div class="chat-ai-msg">> GREETINGS, TRAVELER. I AM NEXUS. AWAITING INPUT...</div>
+                    </div>
+                    <div style="display: flex; margin-top: 15px; border-top: 1px dashed #33FF00; padding-top: 15px;">
+                        <span style="color: #33FF00; font-family: 'Courier New', monospace; margin-right: 10px; line-height: 2;">USER_></span>
+                        <input type="text" id="chat-input" style="flex: 1; background: transparent; border: none; color: #fff; font-family: 'Courier New', monospace; font-size: 1rem; outline: none;" autocomplete="off" onkeypress="if(event.key === 'Enter') sendChatMsg()">
+                    </div>
                 </div>
                 
                 <div id="standby-screen">
@@ -401,7 +446,7 @@
 
         // ================= CRT 螢幕與霓虹文字邏輯 =================
         // 📢 這裡就是你的「後台廣播內容」，你可以隨時更改這裡的文字！
-        const ANNOUNCEMENT_TEXT = "SYSTEM BOOT... WELCOME TO NEXUS INTELLIGENCE. CURRENT MARKET STATUS: HIGH VOLATILITY DETECTED.";
+        const ANNOUNCEMENT_TEXT = "SYSTEM BOOT... WELCOME TO NEXUS.<br><br><span style='color: #FF3366;'>[ WARNING ]</span> HIGH VOLATILITY DETECTED.<br><br>> AWAITING COMMAND...";
 
         let isCrtOn = false;
 
@@ -420,16 +465,9 @@
                 crtScreen.classList.remove('crt-turn-off');
                 crtScreen.classList.add('crt-turn-on');
 
-                // 自動將文字拆解成帶有動畫延遲的字元，創造左到右輪流亮起的視覺
-                textContainer.innerHTML = '';
-                for (let i = 0; i < ANNOUNCEMENT_TEXT.length; i++) {
-                    let span = document.createElement('span');
-                    span.innerText = ANNOUNCEMENT_TEXT[i] === ' ' ? '\u00A0' : ANNOUNCEMENT_TEXT[i];
-                    span.className = 'neon-char';
-                    // 每個字母延遲 0.1 秒，創造跑馬燈閃爍感
-                    span.style.animationDelay = (i * 0.1) + 's'; 
-                    textContainer.appendChild(span);
-                }
+                // 替換成這兩行：直接塞入 HTML，並套用整體的霓虹閃爍 CSS
+                textContainer.innerHTML = ANNOUNCEMENT_TEXT;
+                textContainer.className = 'neon-char';
             } else {
                 // 關機
                 isCrtOn = false;
@@ -445,6 +483,49 @@
                 }, 500);
             }
         }
+
+        // ================= 古文明對話邏輯 =================
+        function toggleChat() {
+            // 隱藏其他畫面
+            document.getElementById('standby-screen').style.display = 'none';
+            document.getElementById('scanning-screen').style.display = 'none';
+            document.getElementById('result-screen').style.display = 'none';
+            if(isCrtOn) toggleCRT(); // 如果電視開著，把它關掉
+
+            const chatUI = document.getElementById('chat-interface');
+            if (chatUI.style.display === 'none' || chatUI.style.display === '') {
+                chatUI.style.display = 'flex';
+                document.getElementById('chat-input').focus();
+            } else {
+                chatUI.style.display = 'none';
+                document.getElementById('standby-screen').style.display = 'flex';
+            }
+        }
+
+        function sendChatMsg() {
+            const input = document.getElementById('chat-input');
+            const text = input.value.trim();
+            if(!text) return;
+            
+            const history = document.getElementById('chat-history');
+            
+            // 1. 印出 User 的訊息
+            history.innerHTML += `<div class="chat-user-msg">USER_> ${text}</div>`;
+            input.value = '';
+
+            // 2. 顯示 AI 正在思考 (閃爍游標)
+            const thinkId = 'think-' + Date.now();
+            history.innerHTML += `<div class="chat-ai-msg" id="${thinkId}">> PROCESSING<span class="cursor-blink"></span></div>`;
+            history.scrollTop = history.scrollHeight;
+
+            // 3. 模擬 2 秒後 AI 回答
+            setTimeout(() => {
+                const aiReply = `> QUERY RECEIVED: "${text}". CURRENTLY MY COGNITIVE MODULE IS RESTRICTED TO STOCK ANALYSIS.`;
+                document.getElementById(thinkId).innerHTML = aiReply;
+                history.scrollTop = history.scrollHeight;
+            }, 2000);
+        }
+
     </script>
 </body>
 </html>

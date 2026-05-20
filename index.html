@@ -232,6 +232,45 @@
         .chat-ai-msg { color: #33FF00; font-family: 'Courier New', monospace; text-shadow: 0 0 4px #33FF00; margin-bottom: 10px; line-height: 1.5; }
         .chat-user-msg { color: #fff; font-family: 'Courier New', monospace; text-shadow: 0 0 4px #fff; margin-bottom: 10px; opacity: 0.8; margin-left: 20px; }
         .cursor-blink { animation: blink 1s step-end infinite; display: inline-block; width: 8px; height: 15px; background: #33FF00; vertical-align: middle; }
+
+                /* 終端機立體弧度與質感外框 */
+        .terminal-window {
+            background: #0D1117;
+            border: 12px solid #2D333B; /* 厚實邊框 */
+            border-radius: 20px;
+            box-shadow: 
+                inset 0 0 20px rgba(0,0,0,0.8), /* 內部陰影模擬凹陷感 */
+                0 10px 30px rgba(0,0,0,0.5);   /* 外部陰影 */
+            position: relative;
+            overflow: hidden;
+         }
+
+         /* 玻璃反光與曲面效應 */
+        .terminal-window::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(0,0,0,0) 50%);
+            pointer-events: none;
+            z-index: 10;
+        }
+
+         /* 股票分析代碼風格化 */
+        .ai-content {
+            color: #00FF41; /* 經典駭客綠 */
+            font-family: 'Courier New', monospace;
+            font-size: 1rem;
+            line-height: 1.5;
+            text-shadow: 0 0 5px #00FF41;
+        }
+
+         /* 語法關鍵字色彩 (我們要讓分析報告看起來像 Code) */
+         .code-keyword { color: #FF00FF; } /* 粉紅：指令 */
+         .code-number { color: #00D4FF; } /* 青色：數值 */
+        
+
+
+
     </style>
 </head>
 <body>
@@ -441,7 +480,14 @@
                 aiBox.style.borderTopColor = '#6222C5';
             }
 
-            document.getElementById('res-ai-text').innerText = data.ai_analysis;
+            // 自動上色分析報告
+            let rawText = data.ai_analysis;
+            // 邏輯：簡單將數字和標點符號自動上色
+            let coloredText = rawText
+                .replace(/\d+/g, '<span class="code-number">$&</span>')
+                .replace(/(買入|賣出|加碼|減碼)/g, '<span class="code-keyword">$&</span>');
+
+            document.getElementById('res-ai-text').innerHTML = coloredText;
         }
 
         // ================= CRT 螢幕與霓虹文字邏輯 =================

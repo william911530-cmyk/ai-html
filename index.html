@@ -457,37 +457,22 @@
             document.getElementById('res-symbol').innerText = stock.symbol;
             document.getElementById('res-price').innerText = `$${stock.price}`;
             
-            // 填入 8 大特徵欄位
+            // 填入 8 大特徵欄位... (保持不變)
             document.getElementById('res-pe').innerText = stock.pe;
-            document.getElementById('res-peg').innerText = stock.peg;
-            document.getElementById('res-52w').innerText = stock.change_52w;
-            document.getElementById('res-beta').innerText = stock.beta;
-            document.getElementById('res-roe').innerText = stock.roe;
-            document.getElementById('res-rsi').innerText = stock.rsi;
-            document.getElementById('res-kd').innerText = `K:${stock.k} D:${stock.d}`;
-            document.getElementById('res-macd').innerText = stock.macd_hist;
+            // ... (其他欄位) ...
 
-            // 根據選用的 AI 切換標題文字與邊框色
-            const aiBox = document.querySelector('.ai-analysis-box');
-            const aiTitle = document.getElementById('ai-synthesis-title');
-            if (currentCore === 'gemini') {
-                aiTitle.innerHTML = `<span style="font-size: 1.2rem;">⚡</span> GEMINI SYNTHESIS`;
-                aiTitle.style.color = '#4285F4';
-                aiBox.style.borderTopColor = '#4285F4';
-            } else {
-                aiTitle.innerHTML = `<span style="font-size: 1.2rem;">⚡</span> DEEPSEEK SYNTHESIS`;
-                aiTitle.style.color = '#6222C5';
-                aiBox.style.borderTopColor = '#6222C5';
-            }
-
-            // 自動上色分析報告
+            // 自動上色邏輯 (現在這裡會變成高階 Code 風格)
+            const aiDisplay = document.getElementById('res-ai-text');
             let rawText = data.ai_analysis;
-            // 邏輯：簡單將數字和標點符號自動上色
+            
+            // 這裡使用了更高級的正規表達式，讓關鍵字更顯眼
             let coloredText = rawText
-                .replace(/\d+/g, '<span class="code-number">$&</span>')
-                .replace(/(買入|賣出|加碼|減碼)/g, '<span class="code-keyword">$&</span>');
+                .replace(/\d+\.?\d*%/g, '<span class="code-number">$&</span>') // 將百分比數字變色
+                .replace(/(買入|賣出|強烈|風險|機會)/g, '<span class="code-keyword">$&</span>'); // 將策略關鍵字變色
 
-            document.getElementById('res-ai-text').innerHTML = coloredText;
+            // 用打字機方式輸出 AI 分析
+            aiDisplay.innerHTML = ''; 
+            typeWriter(aiDisplay, coloredText, 10); 
         }
 
         // ================= CRT 螢幕與霓虹文字邏輯 =================
@@ -548,30 +533,37 @@
             }
         }
 
-        function sendChatMsg() {
+        async function sendChatMsg() {
             const input = document.getElementById('chat-input');
             const text = input.value.trim();
             if(!text) return;
             
             const history = document.getElementById('chat-history');
-            
-            // 1. 印出 User 的訊息
             history.innerHTML += `<div class="chat-user-msg">USER_> ${text}</div>`;
             input.value = '';
 
-            // 2. 顯示 AI 正在思考 (閃爍游標)
             const thinkId = 'think-' + Date.now();
             history.innerHTML += `<div class="chat-ai-msg" id="${thinkId}">> PROCESSING<span class="cursor-blink"></span></div>`;
             history.scrollTop = history.scrollHeight;
 
-            // 3. 模擬 2 秒後 AI 回答
-            setTimeout(() => {
-                const aiReply = `> QUERY RECEIVED: "${text}". CURRENTLY MY COGNITIVE MODULE IS RESTRICTED TO STOCK ANALYSIS.`;
-                document.getElementById(thinkId).innerHTML = aiReply;
-                history.scrollTop = history.scrollHeight;
-            }, 2000);
+            try {
+                // 🚀 連接後端
+                const response = await fetch(`${BACKEND_URL}/api/chat`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: text })
+                });
+                const data = await response.json();
+                
+                // 使用打字機效果印出 AI 回覆
+                const container = document.getElementById(thinkId);
+                container.innerHTML = ''; 
+                await typeWriter(container, data.reply, 30);
+            } catch (e) {
+                document.getElementById(thinkId).innerText = "> [ERROR] NEXUS LINK DISCONNECTED.";
+            }
+            history.scrollTop = history.scrollHeight;
         }
-
     </script>
 </body>
 </html>

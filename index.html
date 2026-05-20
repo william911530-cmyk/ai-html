@@ -244,18 +244,15 @@
             pointer-events: none;
             z-index: 10;
         }
-        
-          /* 終端機立體弧度與質感外框 */
-        .terminal-window {
-            background: #0D1117;
-            border: 12px solid #2D333B; /* 厚實邊框 */
-            border-radius: 20px;
-            box-shadow: 
-                inset 0 0 20px rgba(0,0,0,0.8), /* 內部陰影模擬凹陷感 */
-                0 10px 30px rgba(0,0,0,0.5);   /* 外部陰影 */
-            position: relative;
-            overflow: hidden;
-         }
+
+        /*終端機曲面反光 */
+        .terminal-window::after {
+            content: " ";
+            display: block; position: absolute; top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            background-size: 100% 4px, 6px 100%;
+            z-index: 5; pointer-events: none;
+            box-shadow: inset 0 0 100px rgba(0, 240, 255, 0.2); /* 增加邊緣青色幽光 */
 
          /* 股票分析代碼風格化 */
          /* AI 股票分析報告風格 */
@@ -272,15 +269,14 @@
             letter-spacing: 0.5px;
         }
 
+        /* 語法關鍵字色彩 (我們要讓分析報告看起來像 Code) #00FF41經典駭客綠 #FFFFFF純白 #00D4FF青色 */
+        .code-keyword { color: #FF00FF; } /* 粉紅：指令 */
+        .code-number { color: #D2B48C; } /* 棕色：數值 */
 
-        /* 讓關鍵字顯現粉色與棕色 */
-        .code-keyword { color: #FFB6C1; font-weight: bold; } /* 柔粉色：策略詞 */
-        .code-number { color: #D2B48C; font-weight: bold; } /* 棕色：數值 */
-        }
-
-         /* 語法關鍵字色彩 (我們要讓分析報告看起來像 Code) #00FF41經典駭客綠 #FFFFFF純白 #00D4FF青色 */
-         .code-keyword { color: #FF00FF; } /* 粉紅：指令 */
-         .code-number { color: #D2B48C; } /* 棕色：數值 */
+        /* AI 報告精準上色 */
+        .code-h3 { color: #00F0FF; font-weight: bold; text-shadow: 0 0 8px #00F0FF; } /* 大標題：青色 */
+        .code-bullet { color: #FFB6C1; } /* 項目符號：粉色 */
+        .code-number { color: #D2B48C; font-weight: bold; } /* 數字與符號：棕色 */
         
 
 
@@ -488,10 +484,11 @@
             const aiDisplay = document.getElementById('res-ai-text');
             let rawText = data.ai_analysis;
             
-            // 這裡使用了更高級的正規表達式，讓關鍵字更顯眼
+            // 精準捕捉 Markdown 標記來上色
             let coloredText = rawText
-                .replace(/\d+\.?\d*%/g, '<span class="code-number">$&</span>') // 將百分比數字變色
-                .replace(/(買入|賣出|強烈|風險|機會)/g, '<span class="code-keyword">$&</span>'); // 將策略關鍵字變色
+                .replace(/(###\s.*)/g, '<span class="code-h3">$1</span>') // 捕捉 ### 開頭的大標題
+                .replace(/(\*\s.*?:)/g, '<span class="code-bullet">$1</span>') // 捕捉 * 開頭的小標題
+                .replace(/([\d\.\-\+\<\>\%]+|[A-Z]{2,})/g, '<span class="code-number">$1</span>'); // 捕捉數字、符號與英文大寫
 
             // 用打字機方式輸出 AI 分析
             aiDisplay.innerHTML = ''; 
@@ -568,22 +565,28 @@
                 document.getElementById('standby-screen').style.display = 'flex';
             }
         }
-        async function typeWriter(element, text, speed) {
-            // 這個函數支援 HTML 標籤渲染，所以顏色標籤不會被當成純文字印出來
-            // 我們這裡不逐字切，改用一次性渲染，但保留視覺上的打字延遲感
-            element.innerHTML = text;
-            
-            // 讓它看起來像是在打字機
-            const originalContent = element.innerHTML;
+        async function typeWriter(element, htmlContent, speed) {
+            // 這個版本能完美處理 HTML 標籤，不會讓標籤字元被印出來
             element.innerHTML = '';
+            element.innerHTML = '<span id="typing-text"></span><span class="cursor-blink">_</span>';
+            const textSpan = element.querySelector('#typing-text');
             
-            // 簡單模擬打字機掃描，不用逐字切 (避免 HTML 標籤碎掉)
-            element.style.opacity = 0;
-            element.innerHTML = originalContent;
-            element.style.transition = 'opacity 1s';
-            setTimeout(() => { element.style.opacity = 1; }, 100);
+            // 由於純手工寫 HTML 解析太複雜，我們利用一個隱藏 div 來輔助
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = htmlContent;
+            
+            // 我們採取「節點複製」策略，以保留原本的 span 顏色標籤
+            // 為求效能與視覺平衡，這裡採用「區塊顯示 + 透明度淡入」結合游標閃爍
+            textSpan.innerHTML = htmlContent;
+            textSpan.style.opacity = 0;
+            textSpan.style.transition = 'opacity 1.5s ease-in-out';
+            
+            setTimeout(() => { textSpan.style.opacity = 1; }, 50);
+            
+            // 假裝打字延遲
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            // 打完字後可以選擇把游標留著或拿掉
         }
-
         async function sendChatMsg() {
             const input = document.getElementById('chat-input');
             const text = input.value.trim();

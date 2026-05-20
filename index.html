@@ -285,12 +285,26 @@
         .code-keyword { color: #FF00FF; } /* 粉紅：指令 */
         .code-number { color: #D2B48C; } /* 棕色：數值 */
 
-        /* AI 報告精準上色 */
-        .code-h3 { color: #00F0FF; font-weight: bold; text-shadow: 0 0 8px #00F0FF; } /* 大標題：青色 */
-        .code-bullet { color: #FFB6C1; } /* 項目符號：粉色 */
-        .code-number { color: #D2B48C; font-weight: bold; } /* 數字與符號：棕色 */
+        /* AI 報告精準上色 
+        .code-h3 { color: #00F0FF; font-weight: bold; text-shadow: 0 0 8px #00F0FF; }  大標題：青色 
+        .code-bullet { color: #FFB6C1; }  項目符號：粉色 
+        .code-number { color: #D2B48C; font-weight: bold; }  數字與符號：棕色 */
         
+        /* 強制上色標籤 */
+        .code-h3 { color: #00F0FF !important; font-weight: bold; }
+        .code-bullet { color: #FFB6C1 !important; font-weight: bold; }
+        .code-number { color: #D2B48C !important; font-weight: bold; }
 
+        /* 聊天室專屬容器 */
+        #chat-interface {
+            display: none; height: 100%; flex-direction: column;
+            background: #020502; border: 1px solid #33FF00; border-radius: 8px; padding: 10px;
+            overflow: hidden; /* 防止溢出 */
+        }
+        #chat-history {
+            flex: 1; overflow-y: auto; padding-bottom: 10px;
+            display: flex; flex-direction: column; gap: 10px;
+        }
 
 
     </style>
@@ -577,59 +591,48 @@
                 document.getElementById('standby-screen').style.display = 'flex';
             }
         }
+        // 修正後的打字機，專門處理帶有 HTML 標籤的字串
+
         async function typeWriter(element, htmlContent, speed) {
-            // 這個版本能完美處理 HTML 標籤，不會讓標籤字元被印出來
-            element.innerHTML = '';
-            element.innerHTML = '<span id="typing-text"></span><span class="cursor-blink">_</span>';
-            const textSpan = element.querySelector('#typing-text');
-            
-            // 由於純手工寫 HTML 解析太複雜，我們利用一個隱藏 div 來輔助
-            const tempDiv = document.createElement('div');
-            tempDiv.innerHTML = htmlContent;
-            
-            // 我們採取「節點複製」策略，以保留原本的 span 顏色標籤
-            // 為求效能與視覺平衡，這裡採用「區塊顯示 + 透明度淡入」結合游標閃爍
-            textSpan.innerHTML = htmlContent;
-            textSpan.style.opacity = 0;
-            textSpan.style.transition = 'opacity 1.5s ease-in-out';
-            
-            setTimeout(() => { textSpan.style.opacity = 1; }, 50);
-            
-            // 假裝打字延遲
-            await new Promise(resolve => setTimeout(resolve, 1500));
-            // 打完字後可以選擇把游標留著或拿掉
-        }
+            element.innerHTML = htmlContent; // 直接放入
+             // 如果你要逐字效果，這裡的邏輯較複雜，我們先確保 HTML 渲染正確，視覺效果透過 CSS 淡入處理
+            element.style.opacity = 0;
+            element.style.transition = `opacity 0.5s ease`;
+            setTimeout(() => { element.style.opacity = 1; }, 50);
+            }
+
+    // 修正後的發送訊息函數 (固定輸入框高度)
         async function sendChatMsg() {
             const input = document.getElementById('chat-input');
+            const history = document.getElementById('chat-history');
             const text = input.value.trim();
             if(!text) return;
-            
-            const history = document.getElementById('chat-history');
+    
             history.innerHTML += `<div class="chat-user-msg">USER_> ${text}</div>`;
             input.value = '';
 
             const thinkId = 'think-' + Date.now();
-            history.innerHTML += `<div class="chat-ai-msg" id="${thinkId}">> PROCESSING<span class="cursor-blink"></span></div>`;
+            history.innerHTML += `<div class="chat-ai-msg" id="${thinkId}">> NEXUS: PROCESSING<span class="cursor-blink">_</span></div>`;
             history.scrollTop = history.scrollHeight;
 
             try {
-                // 🚀 連接後端
                 const response = await fetch(`${BACKEND_URL}/api/chat`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ message: text })
                 });
                 const data = await response.json();
-                
-                // 使用打字機效果印出 AI 回覆
+        
                 const container = document.getElementById(thinkId);
                 container.innerHTML = ''; 
-                await typeWriter(container, data.reply, 30);
+                // 確保這裡回傳的是純文字或乾淨的字串，避免渲染標籤問題
+                await typeWriter(container, `> NEXUS: ${data.reply}`, 30); 
             } catch (e) {
-                document.getElementById(thinkId).innerText = "> [ERROR] NEXUS LINK DISCONNECTED.";
+                document.getElementById(thinkId).innerText = "> [ERR] NEXUS LINK DISCONNECTED.";
             }
             history.scrollTop = history.scrollHeight;
-        }
+        } 
+    
     </script>
 </body>
 </html>

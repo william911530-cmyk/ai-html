@@ -48,7 +48,7 @@
         /* 左側：控制面板與監控清單 */
         .side-panel { width: 320px; display: flex; flex-direction: column; gap: 20px; }
         .panel-box { background: var(--bg-panel); border: 1px solid var(--border-line); border-radius: 8px; padding: 20px; }
-        
+
         .panel-title {
             font-family: var(--font-mono); font-size: 0.85rem; color: var(--text-dim);
             text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px;
@@ -101,7 +101,7 @@
 
         #standby-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: var(--text-dim); text-align: center; }
         #scanning-screen { display: none; height: 100%; flex-direction: column; justify-content: center; font-family: var(--font-mono); color: var(--accent-glow); }
-        
+
         .scan-line { height: 2px; background: var(--accent-glow); width: 0%; margin-bottom: 20px; box-shadow: 0 0 10px var(--accent-glow); transition: width 0.5s; }
         .log-text { font-size: 0.85rem; margin: 5px 0; opacity: 0.9; }
 
@@ -222,18 +222,28 @@
         .chat-btn { margin-top: 10px; border-color: #33FF00; color: #33FF00; text-shadow: 0 0 5px #33FF00; }
         .chat-btn:hover { background: rgba(51, 255, 0, 0.2); }
         
-        #chat-interface {
-            display: none; height: 100%; flex-direction: column;
-            background: #020502; /* 極暗的綠黑底色 */
-            border: 1px solid #33FF00; border-radius: 8px; padding: 20px;
-            box-shadow: inset 0 0 30px rgba(51, 255, 0, 0.1);
+        /* 讓對話框絕對定位，覆蓋整個終端機且不被撐破 */
+        #chat-interface { 
+            display: none; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            background: #0D1117; z-index: 30; padding: 25px; flex-direction: column; 
         }
-        
-        .chat-ai-msg { color: #33FF00; font-family: 'Courier New', monospace; text-shadow: 0 0 4px #33FF00; margin-bottom: 10px; line-height: 1.5; }
-        .chat-user-msg { color: #fff; font-family: 'Courier New', monospace; text-shadow: 0 0 4px #fff; margin-bottom: 10px; opacity: 0.8; margin-left: 20px; }
-        .cursor-blink { animation: blink 1s step-end infinite; display: inline-block; width: 8px; height: 15px; background: #33FF00; vertical-align: middle; }
+        /* 歷史對話區自動生成捲軸，往上推擠 */
+        #chat-history { 
+            flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; padding-right: 10px; 
+        }
+        /* 固定底部的輸入框區域 */
+        .chat-input-area { 
+            display: flex; flex-shrink: 0; margin-top: 15px; border-top: 1px dashed #33FF00; padding-top: 15px; 
+        }
 
-              
+        .chat-ai-msg { color: #33FF00; font-family: 'Courier New', monospace; text-shadow: 0 0 4px #33FF00; line-height: 1.5; }
+        .chat-user-msg { color: #fff; font-family: 'Courier New', monospace; text-shadow: 0 0 4px #fff; opacity: 0.8; margin-left: 20px; }
+        
+        /* 游標閃爍修復 */
+        .cursor-blink { display: inline-block; width: 8px; height: 15px; background: #33FF00; vertical-align: middle; margin-left: 5px; animation: blink 1s step-end infinite; }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+
 
          /* 玻璃反光與曲面效應 */
         .terminal-window::before {
@@ -285,26 +295,12 @@
         .code-keyword { color: #FF00FF; } /* 粉紅：指令 */
         .code-number { color: #D2B48C; } /* 棕色：數值 */
 
-        /* AI 報告精準上色 
-        .code-h3 { color: #00F0FF; font-weight: bold; text-shadow: 0 0 8px #00F0FF; }  大標題：青色 
-        .code-bullet { color: #FFB6C1; }  項目符號：粉色 
-        .code-number { color: #D2B48C; font-weight: bold; }  數字與符號：棕色 */
-        
-        /* 強制上色標籤 */
-        .code-h3 { color: #00F0FF !important; font-weight: bold; }
-        .code-bullet { color: #FFB6C1 !important; font-weight: bold; }
-        .code-number { color: #D2B48C !important; font-weight: bold; }
+        /* AI 報告精準上色 */
+        .code-h3 { color: #00F0FF; font-weight: bold; text-shadow: 0 0 8px #00F0FF; } /* 大標題：青色 */
+        .code-bullet { color: #FFB6C1; } /* 項目符號：粉色 */
+        .code-number { color: #D2B48C; font-weight: bold; } /* 數字與符號：棕色 */
 
-        /* 聊天室專屬容器 */
-        #chat-interface {
-            display: none; height: 100%; flex-direction: column;
-            background: #020502; border: 1px solid #33FF00; border-radius: 8px; padding: 10px;
-            overflow: hidden; /* 防止溢出 */
-        }
-        #chat-history {
-            flex: 1; overflow-y: auto; padding-bottom: 10px;
-            display: flex; flex-direction: column; gap: 10px;
-        }
+
 
 
     </style>
@@ -334,7 +330,7 @@
                     <input type="text" id="target-input" class="search-input" placeholder="Symbol (e.g. 2330.TW)" autocomplete="off">
                     <button class="search-btn" onclick="initiateScan()">EXECUTE SCAN</button>
                 </div>
-                
+
                 <div class="power-btn-wrapper">
                     <button id="crt-power-btn" class="crt-power-btn" onclick="toggleCRT()">[ SYS_POWER : OFF ]</button>
                 </div>
@@ -343,7 +339,7 @@
                     <button class="crt-power-btn chat-btn" onclick="toggleChat()">[ INITIATE_COMMS ]</button>
                 </div>
 
-                
+
             </div>
 
             <div class="panel-box">
@@ -365,18 +361,18 @@
                 </div>
 
                 <div id="chat-interface">
-                    <div style="color: #33FF00; border-bottom: 1px dashed #33FF00; padding-bottom: 10px; margin-bottom: 15px; font-family: 'Courier New', monospace;">
-                        [ NEXUS_INTELLIGENCE_LINK_ESTABLISHED ]
+                    <div style="color: #33FF00; border-bottom: 1px dashed #33FF00; padding-bottom: 10px; margin-bottom: 15px; font-family: 'Courier New', monospace; flex-shrink: 0;">
+                        [ NEXUS_LINK_ESTABLISHED ]
                     </div>
-                    <div id="chat-history" style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 10px;">
+                    <div id="chat-history">
                         <div class="chat-ai-msg">> GREETINGS, TRAVELER. I AM NEXUS. AWAITING INPUT...</div>
                     </div>
-                    <div style="display: flex; margin-top: 15px; border-top: 1px dashed #33FF00; padding-top: 15px;">
+                    <div class="chat-input-area">
                         <span style="color: #33FF00; font-family: 'Courier New', monospace; margin-right: 10px; line-height: 2;">USER_></span>
                         <input type="text" id="chat-input" style="flex: 1; background: transparent; border: none; color: #fff; font-family: 'Courier New', monospace; font-size: 1rem; outline: none;" autocomplete="off" onkeypress="if(event.key === 'Enter') sendChatMsg()">
                     </div>
                 </div>
-                
+
                 <div id="standby-screen">
                     <div style="font-size: 3rem; margin-bottom: 10px; opacity: 0.3;">⎈</div>
                     <h2 style="margin: 0; font-weight: normal;">Awaiting Target Designation</h2>
@@ -449,10 +445,10 @@
             document.getElementById('standby-screen').style.display = 'none';
             document.getElementById('result-screen').style.display = 'none';
             document.getElementById('scanning-screen').style.display = 'flex';
-            
+
             const logContainer = document.getElementById('log-container');
             const progressBar = document.getElementById('progress-bar');
-            
+
             // 動態列印終端機日誌
             logContainer.innerHTML = `<div class="log-text" style="color: white;">> INITIALIZING TARGET: ${input}</div>`;
             logContainer.innerHTML += `<div class="log-text">> ALLOCATING CORE: ${currentCore.toUpperCase()}</div>`;
@@ -460,7 +456,7 @@
 
             try {
                 logContainer.innerHTML += `<div class="log-text" style="color: yellow;">> WAITING FOR SERVER RESPONSE...</div>`;
-                
+
                 // 🚀 正式向後端發送請求
                 const response = await fetch(`${BACKEND_URL}/api/analyze`, {
                     method: 'POST',
@@ -484,7 +480,7 @@
                 logContainer.innerHTML += `<div class="log-text" style="color: var(--accent-alert);">> [ERROR] CONNECTION FAILED. SERVER OFFLINE.</div>`;
             }
         }
-        
+
         function showResults(data) {
             document.getElementById('scanning-screen').style.display = 'none';
             document.getElementById('result-screen').style.display = 'block';
@@ -492,7 +488,7 @@
             const stock = data.stock_data;
             document.getElementById('res-symbol').innerText = stock.symbol;
             document.getElementById('res-price').innerText = `$${stock.price}`;
-            
+
             // 填入 8 大特徵欄位... (保持不變)
             document.getElementById('res-symbol').innerText = stock.symbol;
             document.getElementById('res-price').innerText = `$${stock.price}`;
@@ -509,7 +505,7 @@
             // 自動上色邏輯 (現在這裡會變成高階 Code 風格)
             const aiDisplay = document.getElementById('res-ai-text');
             let rawText = data.ai_analysis;
-            
+
             // 精準捕捉 Markdown 標記來上色
             let coloredText = rawText
                 .replace(/(###\s.*)/g, '<span class="code-h3">$1</span>') // 捕捉 ### 開頭的大標題
@@ -550,7 +546,7 @@
                 isCrtOn = true;
                 btn.classList.add('sys-on');
                 btn.innerText = "[ SYS_POWER : ON ]";
-                
+
                 crtScreen.style.display = 'block';
                 crtScreen.classList.remove('crt-turn-off');
                 crtScreen.classList.add('crt-turn-on');
@@ -563,10 +559,10 @@
                 isCrtOn = false;
                 btn.classList.remove('sys-on');
                 btn.innerText = "[ SYS_POWER : OFF ]";
-                
+
                 crtScreen.classList.remove('crt-turn-on');
                 crtScreen.classList.add('crt-turn-off');
-                
+
                 // 動畫播完後徹底隱藏
                 setTimeout(() => {
                     if(!isCrtOn) crtScreen.style.display = 'none';
@@ -591,28 +587,59 @@
                 document.getElementById('standby-screen').style.display = 'flex';
             }
         }
-        // 修正後的打字機，專門處理帶有 HTML 標籤的字串
 
-        async function typeWriter(element, htmlContent, speed) {
-            element.innerHTML = htmlContent; // 直接放入
-             // 如果你要逐字效果，這裡的邏輯較複雜，我們先確保 HTML 渲染正確，視覺效果透過 CSS 淡入處理
-            element.style.opacity = 0;
-            element.style.transition = `opacity 0.5s ease`;
-            setTimeout(() => { element.style.opacity = 1; }, 50);
+        //專用1 : AI股票分析
+        async function typeWriterHTML(element, htmlString, speed) {
+            element.innerHTML = '';
+            let currentHTML = '';
+            let isTag = false;
+            
+            for (let i = 0; i < htmlString.length; i++) {
+                let char = htmlString.charAt(i);
+                currentHTML += char;
+                
+                if (char === '<') isTag = true;
+                if (char === '>') isTag = false;
+                
+                if (!isTag) {
+                    element.innerHTML = currentHTML;
+                    // 自動滾動畫面
+                    element.closest('.terminal-window').scrollTop = element.closest('.terminal-window').scrollHeight;
+                    await new Promise(r => setTimeout(r, speed));
+                }
             }
+        }
 
-    // 修正後的發送訊息函數 (固定輸入框高度)
+        // 【專用 2】：NEXUS 聊天室專用打字機 (純文字，帶有綠色閃爍游標)
+        async function typeWriterChat(element, text, speed) {
+            element.innerHTML = '';
+            let currentText = '';
+            for (let i = 0; i < text.length; i++) {
+                currentText += text.charAt(i);
+                // 每次打字都在後面補上游標
+                element.innerHTML = currentText + '<span class="cursor-blink"></span>';
+                // 對話紀錄自動往上滑，輸入框永遠在固定位置
+                const historyBox = document.getElementById('chat-history');
+                historyBox.scrollTop = historyBox.scrollHeight;
+                await new Promise(r => setTimeout(r, speed));
+            }
+        }
+
+        // ================= 對話與顯示操作區 =================
+
+        // 聊天發送邏輯
         async function sendChatMsg() {
             const input = document.getElementById('chat-input');
             const history = document.getElementById('chat-history');
             const text = input.value.trim();
             if(!text) return;
-    
+            
             history.innerHTML += `<div class="chat-user-msg">USER_> ${text}</div>`;
             input.value = '';
+            history.scrollTop = history.scrollHeight;
 
             const thinkId = 'think-' + Date.now();
-            history.innerHTML += `<div class="chat-ai-msg" id="${thinkId}">> NEXUS: PROCESSING<span class="cursor-blink">_</span></div>`;
+            history.innerHTML += `<div class="chat-ai-msg" id="${thinkId}">> NEXUS: PROCESSING<span class="cursor-blink"></span></div>`;
             history.scrollTop = history.scrollHeight;
 
             try {
@@ -622,17 +649,21 @@
                     body: JSON.stringify({ message: text })
                 });
                 const data = await response.json();
-        
+                
                 const container = document.getElementById(thinkId);
-                container.innerHTML = ''; 
-                // 確保這裡回傳的是純文字或乾淨的字串，避免渲染標籤問題
-                await typeWriter(container, `> NEXUS: ${data.reply}`, 30); 
+                // 呼叫聊天室專用的打字機
+                await typeWriterChat(container, `> NEXUS: ${data.reply}`, 30); 
             } catch (e) {
-                document.getElementById(thinkId).innerText = "> [ERR] NEXUS LINK DISCONNECTED.";
+                // 如果遇到 429 或斷線，在此報錯
+                document.getElementById(thinkId).innerHTML = "> NEXUS: [ERR] API RATE LIMIT OR DISCONNECTED.";
             }
             history.scrollTop = history.scrollHeight;
-        } 
-    
+        }
+
+        // 在 showResults 的最尾端，換成呼叫 HTML 專用打字機
+        // (把 showResults 函數最後的三行替換成這個)
+        // aiDisplay.innerHTML = ''; 
+        // typeWriterHTML(aiDisplay, coloredText, 10);
     </script>
 </body>
 </html>

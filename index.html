@@ -244,18 +244,29 @@
         @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
 
 
-        /* === 終端機立體弧度與質感 === 
+        /* === 終端機立體弧度與質感 === */
         .terminal-window {
-            background: #0D1117;
-            border: 12px solid #2D333B; /* 厚實邊框 
-            border-radius: 20px;
-            box-shadow: 
-                inset 0 0 20px rgba(0,0,0,0.8), /* 內部陰影模擬凹陷感 
-                0 10px 30px rgba(0,0,0,0.5);   /* 外部陰影 
-            position: relative;
-            overflow: hidden;
-            flex: 1; padding: 25px; overflow-y: auto;
+            position: relative; overflow: hidden; flex: 1; padding: 25px; overflow-y: auto;
+            background: transparent; /* 預設去背 */
+            border: none;
+            box-shadow: none;
         }
+
+        /* === 聊天室專屬啟動狀態 (厚實邊框與立體反光) === */
+        .terminal-window.chat-mode-active {
+            background: #0D1117; 
+            border: 12px solid #2D333B; 
+            border-radius: 20px;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.8), 0 10px 30px rgba(0,0,0,0.5);   
+        }
+
+        /* 聊天室專屬：玻璃反光與掃描線 */
+        .terminal-window.chat-mode-active::before, .terminal-window.chat-mode-active::after {
+            content: ""; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            pointer-events: none; z-index: 999; 
+        }
+        .terminal-window.chat-mode-active::before { background: linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(0,0,0,0) 50%); }
+        .terminal-window.chat-mode-active::after { background: linear-gradient(rgba(18,16,16,0) 50%, rgba(0,0,0,0.1) 50%); background-size: 100% 4px; }
 
         /* 玻璃反光與掃描線：確保 z-index 足夠大 */
         .terminal-window::before, .terminal-window::after {
@@ -457,40 +468,46 @@
             document.querySelectorAll('.core-btn').forEach(btn => btn.classList.remove('active'));
             document.querySelector(`.core-btn[data-core="${core}"]`).classList.add('active');
         }
-
+        
+        function quickScan(symbol) {
+            // 現在點擊監控清單，只會把文字填入輸入框，不會自動送出
+            document.getElementById('target-input').value = symbol;
+            // 移除了 initiateScan() 讓使用者可以自己決定何時按下 EXECUTE SCAN
+        }
+        /*
         function quickScan(symbol) {
             document.getElementById('target-input').value = symbol;
             initiateScan();
-        }
+        }*/
 
         document.getElementById('target-input').addEventListener('keypress', function (e) {
             if (e.key === 'Enter') initiateScan();
         });
 
         async function initiateScan() {
-            // 如果 CRT 螢幕還開著，掃描時自動關閉它
             if (isCrtOn) toggleCRT();
+            // 💡 確保離開聊天室時邊框消失
+            document.querySelector('.terminal-window').classList.remove('chat-mode-active'); 
 
             let input = document.getElementById('target-input').value.trim().toUpperCase();
             if (/^\d{4}$/.test(input)) input += ".TW";
             if (!input) return;
 
+            // ... (下方原有的 scanning-screen 顯示、fetch API 邏輯保持不變) ...
+            document.getElementById('chat-interface').style.display = 'none';
             document.getElementById('standby-screen').style.display = 'none';
             document.getElementById('result-screen').style.display = 'none';
             document.getElementById('scanning-screen').style.display = 'flex';
-
+            
             const logContainer = document.getElementById('log-container');
             const progressBar = document.getElementById('progress-bar');
-
-            // 動態列印終端機日誌
+            
             logContainer.innerHTML = `<div class="log-text" style="color: white;">> INITIALIZING TARGET: ${input}</div>`;
             logContainer.innerHTML += `<div class="log-text">> ALLOCATING CORE: ${currentCore.toUpperCase()}</div>`;
             progressBar.style.width = '30%';
 
             try {
                 logContainer.innerHTML += `<div class="log-text" style="color: yellow;">> WAITING FOR SERVER RESPONSE...</div>`;
-
-                // 🚀 正式向後端發送請求
                 const response = await fetch(`${BACKEND_URL}/api/analyze`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -504,25 +521,18 @@
                 logContainer.innerHTML += `<div class="log-text" style="color: #00FF88;">> DATA DECRYPTED. RENDERING REPORT...</div>`;
                 progressBar.style.width = '100%';
 
-                // 稍微延遲讓玩家看完綠色成功文字，再跳轉畫面
-                setTimeout(() => {
-                    showResults(data);
-                }, 600);
-
+                setTimeout(() => { showResults(data); }, 600);
             } catch (error) {
                 logContainer.innerHTML += `<div class="log-text" style="color: var(--accent-alert);">> [ERROR] CONNECTION FAILED. SERVER OFFLINE.</div>`;
             }
         }
-
+        
         function showResults(data) {
             document.getElementById('scanning-screen').style.display = 'none';
             document.getElementById('result-screen').style.display = 'block';
 
+            // 填入基礎資料
             const stock = data.stock_data;
-            document.getElementById('res-symbol').innerText = stock.symbol;
-            document.getElementById('res-price').innerText = `$${stock.price}`;
-
-            // 填入 8 大特徵欄位... (保持不變)
             document.getElementById('res-symbol').innerText = stock.symbol;
             document.getElementById('res-price').innerText = `$${stock.price}`;
             document.getElementById('res-pe').innerText = stock.pe;
@@ -533,23 +543,24 @@
             document.getElementById('res-rsi').innerText = stock.rsi;
             document.getElementById('res-kd').innerText = `K:${stock.k} D:${stock.d}`;
             document.getElementById('res-macd').innerText = stock.macd_hist;
-            // ... (其他欄位) ...
 
-            // 自動上色邏輯 (現在這裡會變成高階 Code 風格)
+            // 取得 AI 報告顯示區
             const aiDisplay = document.getElementById('res-ai-text');
-            let rawText = data.ai_analysis;
-
-            // 精準捕捉 Markdown 標記來上色
-            let coloredText = rawText
-                .replace(/(###\s.*)/g, '<span class="code-h3">$1</span>') // 捕捉 ### 開頭的大標題
-                .replace(/(\*\s.*?:)/g, '<span class="code-bullet">$1</span>') // 捕捉 * 開頭的小標題
-                .replace(/([\d\.\-\+\<\>\%]+|[A-Z]{2,})/g, '<span class="code-number">$1</span>'); // 捕捉數字、符號與英文大寫
-
-            // 用打字機方式輸出 AI 分析
-            aiDisplay.innerHTML = ''; 
-            typeWriter(aiDisplay, coloredText, 10); 
+            
+            // 💡 防呆機制：如果 AI 有回傳內容，就上色；如果沒有，顯示錯誤提示，絕不留空框！
+            if (data.ai_analysis && data.ai_analysis.trim() !== "") {
+                let formatted = data.ai_analysis
+                    .replace(/(### .*)/g, '<span class="code-h3">$1</span>')
+                    .replace(/(\* .*?:)/g, '<span class="code-bullet">$1</span>')
+                    .replace(/([\d\.]+%?)/g, '<span class="code-number">$1</span>');
+                
+                aiDisplay.innerHTML = formatted;
+            } else {
+                aiDisplay.innerHTML = "<span style='color: var(--accent-alert);'>[SYS_ERR] AI 未回傳分析結果，請檢查連線或 API 狀態。</span>";
+            }
         }
 
+        
         // ================= CRT 螢幕與霓虹文字邏輯 =================
         // 📢 這裡就是你的「後台廣播內容」，你可以隨時更改這裡的文字！
         const ANNOUNCEMENT_TEXT = `
@@ -605,19 +616,22 @@
 
         // ================= 古文明對話邏輯 =================
         function toggleChat() {
-            // 隱藏其他畫面
             document.getElementById('standby-screen').style.display = 'none';
             document.getElementById('scanning-screen').style.display = 'none';
             document.getElementById('result-screen').style.display = 'none';
-            if(isCrtOn) toggleCRT(); // 如果電視開著，把它關掉
+            if(isCrtOn) toggleCRT(); 
 
             const chatUI = document.getElementById('chat-interface');
+            const termWindow = document.querySelector('.terminal-window'); // 抓取外框
+
             if (chatUI.style.display === 'none' || chatUI.style.display === '') {
                 chatUI.style.display = 'flex';
                 document.getElementById('chat-input').focus();
+                termWindow.classList.add('chat-mode-active'); // 💡 加上厚邊框與反光
             } else {
                 chatUI.style.display = 'none';
                 document.getElementById('standby-screen').style.display = 'flex';
+                termWindow.classList.remove('chat-mode-active'); // 💡 移除厚邊框
             }
         }
 

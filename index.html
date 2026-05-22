@@ -443,6 +443,9 @@
                         <div class="data-cell"><div class="cell-label">RSI (14)</div><div class="cell-value" id="res-rsi">--</div></div>
                         <div class="data-cell"><div class="cell-label">KD (K/D)</div><div class="cell-value" id="res-kd">--</div></div>
                         <div class="data-cell"><div class="cell-label">MACD (HIST)</div><div class="cell-value" id="res-macd">--</div></div>
+                        <div class="data-cell"><div class="cell-label">ROIC (投入資本回報)</div><div class="cell-value" id="res-roic" style="color: var(--accent-glow);">--</div></div>
+                        <div class="data-cell"><div class="cell-label">EV / FCF</div><div class="cell-value" id="res-evfcf" style="color: var(--accent-glow);">--</div></div>
+                        <div class="data-cell"><div class="cell-label">DIVIDEND YIELD</div><div class="cell-value" id="res-div" style="color: #00FF88;">--</div></div>
                     </div>
 
                     <div class="ai-analysis-box">
@@ -543,6 +546,9 @@
             document.getElementById('res-rsi').innerText = stock.rsi;
             document.getElementById('res-kd').innerText = `K:${stock.k} D:${stock.d}`;
             document.getElementById('res-macd').innerText = stock.macd_hist;
+            document.getElementById('res-roic').innerText = stock.roic;
+            document.getElementById('res-evfcf').innerText = stock.ev_fcf;
+            document.getElementById('res-div').innerText = stock.div;
 
             // 取得 AI 報告顯示區
             const aiDisplay = document.getElementById('res-ai-text');

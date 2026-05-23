@@ -446,6 +446,10 @@
                         <div class="data-cell"><div class="cell-label">ROIC (投入資本回報)</div><div class="cell-value" id="res-roic" style="color: var(--accent-glow);">--</div></div>
                         <div class="data-cell"><div class="cell-label">EV / FCF</div><div class="cell-value" id="res-evfcf" style="color: var(--accent-glow);">--</div></div>
                         <div class="data-cell"><div class="cell-label">DIVIDEND YIELD</div><div class="cell-value" id="res-div" style="color: #00FF88;">--</div></div>
+                        <div class="data-cell"><div class="cell-label">EARNINGS YOY</div><div class="cell-value" id="res-yoy" style="color: var(--accent-glow);">--</div></div>
+                        <div class="data-cell"><div class="cell-label">P/B RATIO</div><div class="cell-value" id="res-pb" style="color: var(--accent-glow);">--</div></div>
+                        <div class="data-cell"><div class="cell-label">NET MARGIN</div><div class="cell-value" id="res-margin" style="color: #00FF88;">--</div></div>
+                        <div class="data-cell"><div class="cell-label">DEBT / EQ</div><div class="cell-value" id="res-debteq">--</div></div>
                     </div>
 
                     <div class="ai-analysis-box">
@@ -549,6 +553,11 @@
             document.getElementById('res-roic').innerText = stock.roic;
             document.getElementById('res-evfcf').innerText = stock.ev_fcf;
             document.getElementById('res-div').innerText = stock.div;
+            // 新增的四項指標賦值
+            document.getElementById('res-yoy').innerText = stock.yoy;
+            document.getElementById('res-pb').innerText = stock.pb;
+            document.getElementById('res-margin').innerText = stock.net_margin;
+            document.getElementById('res-debteq').innerText = stock.debt_eq;
 
             // 取得 AI 報告顯示區
             const aiDisplay = document.getElementById('res-ai-text');

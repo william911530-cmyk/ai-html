@@ -581,7 +581,7 @@
             document.getElementById('res-div').innerText = stock.div;
             // 新增的四項指標賦值
             document.getElementById('res-yoy').innerText = stock.yoy;
-            document.getElementById('res-pb').innerText = stock.pb;
+            document.getElementById('res-pb').innerText = (stock.pb && !isNaN(stock.pb)) ? stock.pb : "N/A";
             document.getElementById('res-margin').innerText = stock.net_margin;
             document.getElementById('res-debteq').innerText = stock.debt_eq;
 

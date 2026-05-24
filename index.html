@@ -515,7 +515,7 @@
             if (e.key === 'Enter') initiateScan();
         });
 
-        async function initiateScan() {
+        async function initiateScan(symbolInput = null, interval = '1d') {
             if (isCrtOn) toggleCRT();
             // 💡 確保離開聊天室時邊框消失
             document.querySelector('.terminal-window').classList.remove('chat-mode-active'); 
@@ -836,12 +836,15 @@
         function changeInterval(interval) {
             selectedInterval = interval;
             document.querySelectorAll('.chart-btn').forEach(btn => btn.classList.remove('active'));
-            event.target.classList.add('active');
+            // 改用以下這種方式找尋觸發按鈕
+            const buttons = document.querySelectorAll('.chart-btn');
+            const clickedBtn = Array.from(buttons).find(b => b.innerText === 
+                (interval === '1d' ? '日' : interval === '1wk' ? '週' : '月'));
+            if (clickedBtn) clickedBtn.classList.add('active');
     
-            // 取得當前的股票代號，重新發起掃描
             const symbol = document.getElementById('target-input').value.trim().toUpperCase();
             if(symbol) initiateScan(symbol, selectedInterval);
-        }        
+        } 
 
         // 修改原本的 initiateScan 函數開頭，讓它接收 interval 參數
         // 原本: async function initiateScan() {

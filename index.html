@@ -346,6 +346,10 @@
         .code-h3 { color: #00F0FF; font-weight: bold; text-shadow: 0 0 8px #00F0FF; } /* 大標題：青色 */
         .code-bullet { color: #FFB6C1; } /* 項目符號：粉色 */
         .code-number { color: #D2B48C; font-weight: bold; } /* 數字與符號：棕色  #00FF88 綠色 */
+
+        /*線圖加入*/
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
         
     </style>
 </head>
@@ -452,6 +456,10 @@
                         <div class="data-cell"><div class="cell-label">DEBT / EQ</div><div class="cell-value" id="res-debteq" style="color: var(--accent-glow);">--</div></div>
                     </div>
 
+                    <div class="chart-container" style="background: rgba(0,0,0,0.4); border: 1px solid var(--border-line); border-radius: 8px; padding: 15px; margin-bottom: 25px; height: 250px; position: relative;">
+                        <canvas id="nexusTrendChart"></canvas>
+                    </div>
+
                     <div class="ai-analysis-box">
                         <div class="ai-header" id="ai-synthesis-title">
                             <span style="font-size: 1.2rem;">⚡</span> NEXUS AI SYNTHESIS
@@ -465,6 +473,9 @@
     </main>
 
     <script>
+        /* 畫線圖 */
+        let trendChart = null; // 用來儲存圖表實例
+        
         // 🌟 請在這裡填入你的 Python 伺服器網址
         const BACKEND_URL = "https://ai-angine-analysis-the-stock.onrender.com";
 
@@ -558,6 +569,49 @@
             document.getElementById('res-pb').innerText = stock.pb;
             document.getElementById('res-margin').innerText = stock.net_margin;
             document.getElementById('res-debteq').innerText = stock.debt_eq;
+
+            // 繪製霓虹科技風線圖
+            const ctx = document.getElementById('nexusTrendChart').getContext('2d');
+            
+            // 如果舊圖表存在，先銷毀它以免重疊
+            if (trendChart) { trendChart.destroy(); }
+
+            trendChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: stock.chart_dates, // X軸：日期
+                    datasets: [{
+                        label: 'PRICE TREND (30D)',
+                        data: stock.chart_prices, // Y軸：價格
+                        borderColor: '#00F0FF', // 霓虹青色
+                        backgroundColor: 'rgba(0, 240, 255, 0.1)', // 底下淡淡的漸層
+                        borderWidth: 2,
+                        pointRadius: 0, // 隱藏點，讓線條更銳利
+                        pointHoverRadius: 6,
+                        pointHoverBackgroundColor: '#FF3366', // 游標滑過變粉紅
+                        fill: true, // 啟用下方漸層
+                        tension: 0.4 // 讓線條有優雅的曲線
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { 
+                        legend: { display: false }, // 隱藏多餘的圖例
+                        tooltip: { mode: 'index', intersect: false, backgroundColor: 'rgba(0,0,0,0.8)', titleFont: {family: 'Courier New'}, bodyFont: {family: 'Courier New', size: 14} }
+                    },
+                    scales: {
+                        x: { display: false }, // 隱藏 X 軸刻度讓畫面更像終端機
+                        y: { 
+                            display: true, 
+                            position: 'right', // 價格放右邊
+                            grid: { color: 'rgba(255,255,255,0.05)' }, // 極淡的網格線
+                            ticks: { color: '#8B949E', font: {family: 'Courier New'} } 
+                        }
+                    },
+                    interaction: { mode: 'nearest', axis: 'x', intersect: false }
+                }
+            });
 
             // 取得 AI 報告顯示區
             const aiDisplay = document.getElementById('res-ai-text');

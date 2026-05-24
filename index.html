@@ -346,9 +346,17 @@
         .code-h3 { color: #00F0FF; font-weight: bold; text-shadow: 0 0 8px #00F0FF; } /* 大標題：青色 */
         .code-bullet { color: #FFB6C1; } /* 項目符號：粉色 */
         .code-number { color: #D2B48C; font-weight: bold; } /* 數字與符號：棕色  #00FF88 綠色 */
+
+        .chart-btn {
+            background: transparent; border: 1px solid #2D3748; color: #8B949E;
+            padding: 4px 12px; border-radius: 4px; font-size: 0.8rem; cursor: pointer;
+            transition: all 0.3s; font-family: var(--font-mono);
+        }
+        .chart-btn:hover { border-color: var(--accent-glow); color: #fff; }
+        .chart-btn.active { border-color: var(--accent-glow); color: #fff; background: rgba(0, 240, 255, 0.1); }
         
     </style>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
 
 </head>
 <body>
@@ -452,6 +460,13 @@
                         <div class="data-cell"><div class="cell-label">P/B RATIO</div><div class="cell-value" id="res-pb" style="color: var(--accent-glow);">--</div></div>
                         <div class="data-cell"><div class="cell-label">NET MARGIN</div><div class="cell-value" id="res-margin" style="color: var(--accent-glow);">--</div></div>
                         <div class="data-cell"><div class="cell-label">DEBT / EQ</div><div class="cell-value" id="res-debteq" style="color: var(--accent-glow);">--</div></div>
+                    </div>
+
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+                        <div style="font-size: 0.8rem; color: #8B949E;">週期:</div>
+                        <button class="chart-btn active" onclick="changeInterval('1d')">日</button>
+                        <button class="chart-btn" onclick="changeInterval('1wk')">週</button>
+                        <button class="chart-btn" onclick="changeInterval('1mo')">月</button>
                     </div>
 
                     <div class="chart-container" style="background: rgba(0,0,0,0.4); border: 1px solid var(--border-line); border-radius: 8px; padding: 15px; margin-bottom: 25px; height: 250px; position: relative;">
@@ -568,38 +583,86 @@
             document.getElementById('res-margin').innerText = stock.net_margin;
             document.getElementById('res-debteq').innerText = stock.debt_eq;
 
-            // 2. 嘗試繪製線圖 (安全模式)
+            // 4. 專業的 K 線圖 + 均線 + 成交量 (Lightweight Charts)
             try {
-                if (stock.chart_dates && stock.chart_prices) {
-                    const ctx = document.getElementById('nexusTrendChart').getContext('2d');
-                    if (trendChart) { trendChart.destroy(); } // 摧毀舊圖
-                    
-                    trendChart = new Chart(ctx, {
-                        type: 'line',
-                        data: {
-                            labels: stock.chart_dates,
-                            datasets: [{
-                                label: 'PRICE',
-                                data: stock.chart_prices,
-                                borderColor: '#00F0FF',
-                                backgroundColor: 'rgba(0, 240, 255, 0.1)',
-                                borderWidth: 2, pointRadius: 0, pointHoverRadius: 6,
-                                fill: true, tension: 0.4
-                            }]
+                if (stock.chart_data && stock.chart_data.length > 0) {
+                    const chartContainer = document.getElementById('nexusTrendChart');
+            
+                    // 移除舊圖表 (如果存在)
+                    if (tvChart) {
+                        tvChart.remove();
+                        chartContainer.innerHTML = '';
+                    }
+
+                    // 初始化圖表
+                    tvChart = LightweightCharts.createChart(chartContainer, {
+                        width: chartContainer.clientWidth, 
+                        height: 350,
+                        layout: { 
+                            background: { type: 'solid', color: '#0B0E14' }, 
+                            textColor: '#8B949E' 
                         },
-                        options: {
-                            responsive: true, maintainAspectRatio: false,
-                            plugins: { legend: { display: false } },
-                            scales: { x: { display: false }, y: { display: true, position: 'right' } }
-                        }
+                        grid: { 
+                            vertLines: { color: 'rgba(255, 255, 255, 0.05)' }, 
+                            horzLines: { color: 'rgba(255, 255, 255, 0.05)' } 
+                        },
+                        timeScale: { 
+                            borderColor: 'rgba(255, 255, 255, 0.1)',
+                            timeVisible: true, // 滑鼠懸停顯示時間
+                            secondsVisible: false
+                        },
+                        rightPriceScale: { borderColor: 'rgba(255, 255, 255, 0.1)' }
                     });
-                } else {
-                    console.warn("找不到線圖數據");
+
+                    // (A) 畫 K 線 (蠟燭圖)
+                    const candlestickSeries = tvChart.addCandlestickSeries({
+                        upColor: '#FF3366', // 漲的顏色 (霓虹粉紅)
+                        downColor: '#00F0FF', // 跌的顏色 (霓虹青色)
+                        borderVisible: false,
+                        wickUpColor: '#FF3366',
+                        wickDownColor: '#00F0FF'
+                    });
+                    const klineData = stock.chart_data.map(d => ({ time: d.time, open: d.open, high: d.high, low: d.low, close: d.close }));
+                    candlestickSeries.setData(klineData);
+
+                    // (B) 畫成交量 (底下的柱狀圖)
+                    const volumeSeries = tvChart.addHistogramSeries({
+                        color: 'rgba(0, 240, 255, 0.3)',
+                        priceFormat: { type: 'volume' },
+                        priceScaleId: '' 
+                    });
+                    volumeSeries.priceScale().applyOptions({ scaleMargins: { top: 0.8, bottom: 0 } });
+                    const volData = stock.chart_data.map(d => ({ 
+                        time: d.time, 
+                        value: d.volume, 
+                        color: d.close >= d.open ? 'rgba(255, 51, 102, 0.5)' : 'rgba(0, 240, 255, 0.5)' 
+                    }));
+                    volumeSeries.setData(volData);
+
+                    // (C) 畫 5日、10日、20日均線 (線條圖)
+                    // 5MA (金黃色)
+                    const line5 = tvChart.addLineSeries({ color: '#FFD700', lineWidth: 2, title: '5MA' });
+                    const ma5Data = stock.chart_data.map(d => ({ time: d.time, value: d.ma5 })).filter(d => d.value !== null);
+                    if(ma5Data.length > 0) line5.setData(ma5Data);
+
+                    // 10MA (橘色)
+                    const line10 = tvChart.addLineSeries({ color: '#FF8C00', lineWidth: 1.5, title: '10MA' });
+                    const ma10Data = stock.chart_data.map(d => ({ time: d.time, value: d.ma10 })).filter(d => d.value !== null);
+                    if(ma10Data.length > 0) line10.setData(ma10Data);
+
+                    // 20MA (紫色)
+                    const line20 = tvChart.addLineSeries({ color: '#9370DB', lineWidth: 1.5, title: '20MA' });
+                    const ma20Data = stock.chart_data.map(d => ({ time: d.time, value: d.ma20 })).filter(d => d.value !== null);
+                    if(ma20Data.length > 0) line20.setData(ma20Data);
+
+                    // 自動縮放顯示範圍
+                    tvChart.timeScale().fitContent();
                 }
             } catch (err) {
-                console.error("畫圖失敗：", err); // 如果畫圖失敗，只會在後台報錯，不會卡死下面的程式
+                console.error("圖表渲染錯誤:", err);
             }
-
+        }
+    
             // 取得 AI 報告顯示區
             const aiDisplay = document.getElementById('res-ai-text');
             
@@ -769,6 +832,25 @@
         // (把 showResults 函數最後的三行替換成這個)
         // aiDisplay.innerHTML = ''; 
         // typeWriterHTML(aiDisplay, coloredText, 10);
+        let selectedInterval = '1d'; // 預設日線
+
+        function changeInterval(interval) {
+            selectedInterval = interval;
+            document.querySelectorAll('.chart-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+    
+            // 取得當前的股票代號，重新發起掃描
+            const symbol = document.getElementById('target-input').value.trim().toUpperCase();
+            if(symbol) initiateScan(symbol, selectedInterval);
+        }        
+
+        // 修改原本的 initiateScan 函數開頭，讓它接收 interval 參數
+        // 原本: async function initiateScan() {
+        // 改為: async function initiateScan(symbolInput = null, interval = '1d') {
+        //        let input = symbolInput || document.getElementById('target-input').value.trim().toUpperCase();
+        //
+        // 然後在 fetch 裡面加上: 
+        // body: JSON.stringify({ symbol: input, ai_choice: currentCore, interval: interval })
         
     </script>
 </body>

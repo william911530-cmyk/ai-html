@@ -346,12 +346,11 @@
         .code-h3 { color: #00F0FF; font-weight: bold; text-shadow: 0 0 8px #00F0FF; } /* 大標題：青色 */
         .code-bullet { color: #FFB6C1; } /* 項目符號：粉色 */
         .code-number { color: #D2B48C; font-weight: bold; } /* 數字與符號：棕色  #00FF88 綠色 */
-
-        /*線圖加入*/
-        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
         
     </style>
+    /*線圖加入*/
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 </head>
 <body>
 
@@ -544,8 +543,6 @@
                 logContainer.innerHTML += `<div class="log-text" style="color: var(--accent-alert);">> [ERROR] CONNECTION FAILED. SERVER OFFLINE.</div>`;
             }
         }
-        
-        let trendChart = null; // 宣告在最外層，用來記錄圖表狀態
         
         function showResults(data) {
             document.getElementById('scanning-screen').style.display = 'none';

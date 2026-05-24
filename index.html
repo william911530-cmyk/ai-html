@@ -545,6 +545,8 @@
             }
         }
         
+        let trendChart = null; // 宣告在最外層，用來記錄圖表狀態
+        
         function showResults(data) {
             document.getElementById('scanning-screen').style.display = 'none';
             document.getElementById('result-screen').style.display = 'block';
@@ -570,48 +572,37 @@
             document.getElementById('res-margin').innerText = stock.net_margin;
             document.getElementById('res-debteq').innerText = stock.debt_eq;
 
-            // 繪製霓虹科技風線圖
-            const ctx = document.getElementById('nexusTrendChart').getContext('2d');
-            
-            // 如果舊圖表存在，先銷毀它以免重疊
-            if (trendChart) { trendChart.destroy(); }
-
-            trendChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: stock.chart_dates, // X軸：日期
-                    datasets: [{
-                        label: 'PRICE TREND (30D)',
-                        data: stock.chart_prices, // Y軸：價格
-                        borderColor: '#00F0FF', // 霓虹青色
-                        backgroundColor: 'rgba(0, 240, 255, 0.1)', // 底下淡淡的漸層
-                        borderWidth: 2,
-                        pointRadius: 0, // 隱藏點，讓線條更銳利
-                        pointHoverRadius: 6,
-                        pointHoverBackgroundColor: '#FF3366', // 游標滑過變粉紅
-                        fill: true, // 啟用下方漸層
-                        tension: 0.4 // 讓線條有優雅的曲線
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { 
-                        legend: { display: false }, // 隱藏多餘的圖例
-                        tooltip: { mode: 'index', intersect: false, backgroundColor: 'rgba(0,0,0,0.8)', titleFont: {family: 'Courier New'}, bodyFont: {family: 'Courier New', size: 14} }
-                    },
-                    scales: {
-                        x: { display: false }, // 隱藏 X 軸刻度讓畫面更像終端機
-                        y: { 
-                            display: true, 
-                            position: 'right', // 價格放右邊
-                            grid: { color: 'rgba(255,255,255,0.05)' }, // 極淡的網格線
-                            ticks: { color: '#8B949E', font: {family: 'Courier New'} } 
+            // 2. 嘗試繪製線圖 (安全模式)
+            try {
+                if (stock.chart_dates && stock.chart_prices) {
+                    const ctx = document.getElementById('nexusTrendChart').getContext('2d');
+                    if (trendChart) { trendChart.destroy(); } // 摧毀舊圖
+                    
+                    trendChart = new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: stock.chart_dates,
+                            datasets: [{
+                                label: 'PRICE',
+                                data: stock.chart_prices,
+                                borderColor: '#00F0FF',
+                                backgroundColor: 'rgba(0, 240, 255, 0.1)',
+                                borderWidth: 2, pointRadius: 0, pointHoverRadius: 6,
+                                fill: true, tension: 0.4
+                            }]
+                        },
+                        options: {
+                            responsive: true, maintainAspectRatio: false,
+                            plugins: { legend: { display: false } },
+                            scales: { x: { display: false }, y: { display: true, position: 'right' } }
                         }
-                    },
-                    interaction: { mode: 'nearest', axis: 'x', intersect: false }
+                    });
+                } else {
+                    console.warn("找不到線圖數據");
                 }
-            });
+            } catch (err) {
+                console.error("畫圖失敗：", err); // 如果畫圖失敗，只會在後台報錯，不會卡死下面的程式
+            }
 
             // 取得 AI 報告顯示區
             const aiDisplay = document.getElementById('res-ai-text');

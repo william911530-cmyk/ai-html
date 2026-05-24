@@ -354,6 +354,19 @@
         }
         .chart-btn:hover { border-color: var(--accent-glow); color: #fff; }
         .chart-btn.active { border-color: var(--accent-glow); color: #fff; background: rgba(0, 240, 255, 0.1); }
+
+        /*
+        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+                        <div style="font-size: 0.8rem; color: #8B949E;">週期:</div>
+                        <button class="chart-btn active" onclick="changeInterval('1d')">日</button>
+                        <button class="chart-btn" onclick="changeInterval('1wk')">週</button>
+                        <button class="chart-btn" onclick="changeInterval('1mo')">月</button>
+                    </div>
+
+                    <div class="chart-container" style="background: rgba(0,0,0,0.4); border: 1px solid var(--border-line); border-radius: 8px; padding: 15px; margin-bottom: 25px; height: 250px; position: relative;">
+                        <canvas id="nexusTrendChart"></canvas>
+                    </div>  
+        */
         
     </style>
     <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
@@ -460,17 +473,6 @@
                         <div class="data-cell"><div class="cell-label">P/B RATIO</div><div class="cell-value" id="res-pb" style="color: var(--accent-glow);">--</div></div>
                         <div class="data-cell"><div class="cell-label">NET MARGIN</div><div class="cell-value" id="res-margin" style="color: var(--accent-glow);">--</div></div>
                         <div class="data-cell"><div class="cell-label">DEBT / EQ</div><div class="cell-value" id="res-debteq" style="color: var(--accent-glow);">--</div></div>
-                    </div>
-
-                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
-                        <div style="font-size: 0.8rem; color: #8B949E;">週期:</div>
-                        <button class="chart-btn active" onclick="changeInterval('1d')">日</button>
-                        <button class="chart-btn" onclick="changeInterval('1wk')">週</button>
-                        <button class="chart-btn" onclick="changeInterval('1mo')">月</button>
-                    </div>
-
-                    <div class="chart-container" style="background: rgba(0,0,0,0.4); border: 1px solid var(--border-line); border-radius: 8px; padding: 15px; margin-bottom: 25px; height: 250px; position: relative;">
-                        <canvas id="nexusTrendChart"></canvas>
                     </div>
 
                     <div class="ai-analysis-box">

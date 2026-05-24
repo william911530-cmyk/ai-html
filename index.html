@@ -610,8 +610,7 @@
                     .replace(/(\* .*?:)/g, '<span class="code-bullet">$1</span>')
                     .replace(/([\d\.]+%?)/g, '<span class="code-number">$1</span>');
                 
-                aiDisplay.innerHTML = ''; 
-                typeWriterHTML(aiDisplay, coloredText, 10);
+                aiDisplay.innerHTML = formatted;
             } else {
                 aiDisplay.innerHTML = "<span style='color: var(--accent-alert);'>[SYS_ERR] AI 未回傳分析結果，請檢查連線或 API 狀態。</span>";
             }
